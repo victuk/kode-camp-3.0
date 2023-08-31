@@ -1,0 +1,17 @@
+{
+  "name": "kodecamp_npm",
+  "version": "1.0.0",
+  "description": "Codecamp npm test",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index"
+  },
+  "keywords": [
+    "kodecamp",
+    "kode",
+    "camp"
+  ],
+  "author": "Victor Ukok",
+  "license": "ISC"
+}
