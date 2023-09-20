@@ -8,6 +8,10 @@ const taskSchema = new mongoose.Schema({
     taskBody: {
         type: String,
         required: true
+    },
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "users"
     }
 }, {timestamps: true});
 
