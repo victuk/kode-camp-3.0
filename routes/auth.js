@@ -3,7 +3,9 @@ const router = express.Router();
 const {userCollection} = require("../schema/userSchema");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const {isL} = require("./tasks");
 require("dotenv").config();
+const {isUserLoggedIn} = require("./middlewares");
 
 router.post("/register", async (req, res) => {
 
@@ -14,6 +16,7 @@ router.post("/register", async (req, res) => {
     await userCollection.create({
         fullName: req.body.fullName,
         email: req.body.email,
+        role: req.body.role,
         password: hashedPassword
     });
 
@@ -23,24 +26,41 @@ router.post("/register", async (req, res) => {
 
 router.post("/login", async (req, res) => {
 
-    const userDetail = await userCollection.findOne({email: req.body.email});
+    const {email, password} = req.body;
+
+    const userDetail = await userCollection.findOne({email});
 
     if(!userDetail) return res.status(404).send("user-not-found");
 
-    const doesPasswordMatch = bcrypt.compareSync(req.body.password, userDetail.password);
+    const doesPasswordMatch = bcrypt.compareSync(password, userDetail.password);
 
     if(!doesPasswordMatch) return res.status(400).send("invalid-credential");
 
+    const {email:userEmail, _id, role} = userDetail;
+
     const token = jwt.sign({
-        email: userDetail.email,
-        userId: userDetail._id
+        email: userEmail,
+        userId: _id,
+        role: role
     }, process.env.secret);
 
     res.send({
         message: "Sign in Successful",
         token
     });
-
 });
+
+
+router.get("/profile", isUserLoggedIn, async (req, res) => {
+    try {
+        const {userId} = req.decoded;
+        const user = await userCollection.findById(userId, "-password");
+        res.send(user);
+    } catch (error) {
+        console.log(error);
+        res.status(500).send("internal-server-error");
+    }
+});
+
 
 module.exports = router;
