@@ -9,14 +9,14 @@ router.use(isUserLoggedIn);
 
 router.post("/pic", upload.single("file"), async (req, res) => {
 
-    const {taskTitle, taskBody} = req.body;
+    try {
+        const {taskTitle, taskBody} = req.body;
     const {originalname} = req.file;
 
-    console.log(req.file);
-    console.log(req.file.originalname);
+    
 
     const newTask = await taskCollection.create({
-        taskTitle, taskBody, pictureName: filename
+        taskTitle, taskBody, pictureName: originalname
     });
 
     res.send({
@@ -24,6 +24,9 @@ router.post("/pic", upload.single("file"), async (req, res) => {
         newTask
     });
 
+    } catch (error) {
+        res.status(500).json({message: "Internal server error"});
+    }
 });
 
 module.exports = router;
