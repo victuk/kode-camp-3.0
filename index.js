@@ -8,6 +8,12 @@ const authRoute = require("./routes/auth");
 const path = require("path");
 const taskWithPicture = require("./routes/uploadPics");
 
+
+const multer = require("multer");
+const upload = multer({dest: "public/"});
+const { taskCollection } = require("./schema/taskSchema");
+const { isUserLoggedIn } = require("./routes/middlewares");
+
 const connect = monogoose.connect(process.env.mongoDBURL);
 
 connect.then(() => {
@@ -23,7 +29,31 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/v1/tasks", tasksRoute);
 app.use("/v1/auth", authRoute);
-app.use("/v1/upload-pic", taskWithPicture)
+// app.use("/v1/upload-pic", taskWithPicture)
+
+app.use(isUserLoggedIn);
+
+app.post("/pic", upload.single("file"), async (req, res) => {
+
+  try {
+      const {taskTitle, taskBody} = req.body;
+  const {originalname} = req.file;
+  const {userId} = req.decoded;
+  
+
+  const newTask = await taskCollection.create({
+      taskTitle, taskBody, pictureName: originalname, user: userId
+  });
+
+  res.send({
+      successful: true,
+      newTask
+  });
+
+  } catch (error) {
+      res.status(500).json({message: "Internal server error"});
+  }
+});
 
 app.listen(port, function() {
   console.log("Listening on port", port);
