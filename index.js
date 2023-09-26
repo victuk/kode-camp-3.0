@@ -5,6 +5,8 @@ const monogoose = require("mongoose");
 require("dotenv").config();
 const tasksRoute = require("./routes/tasks");
 const authRoute = require("./routes/auth");
+const path = require("path");
+const taskWithPicture = require("./routes/uploadPics");
 
 const connect = monogoose.connect(process.env.mongoDBURL);
 
@@ -16,10 +18,12 @@ connect.then(() => {
 
 
 app.use(express.json());
-app.use(express.urlencoded({extended: false}))
+app.use(express.urlencoded({extended: false}));
+app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/v1/tasks", tasksRoute);
 app.use("/v1/auth", authRoute);
+app.use("/v1/upload-pic", taskWithPicture)
 
 app.listen(port, function() {
   console.log("Listening on port", port);
