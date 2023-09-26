@@ -6,7 +6,7 @@ require("dotenv").config();
 const tasksRoute = require("./routes/tasks");
 const authRoute = require("./routes/auth");
 const path = require("path");
-const taskWithPicture = require("./routes/uploadPics");
+// const taskWithPicture = require("./routes/uploadPics");
 
 
 const multer = require("multer");
@@ -39,6 +39,8 @@ app.post("/pic", upload.single("file"), async (req, res) => {
       const {taskTitle, taskBody} = req.body;
   const {originalname} = req.file;
   const {userId} = req.decoded;
+
+  console.log(req.file);
   
 
   const newTask = await taskCollection.create({
