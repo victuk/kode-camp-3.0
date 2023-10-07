@@ -6,8 +6,15 @@ require("dotenv").config();
 const tasksRoute = require("./routes/tasks");
 const authRoute = require("./routes/auth");
 const path = require("path");
-// const taskWithPicture = require("./routes/uploadPics");
-
+const cloudinary = require("cloudinary").v2;
+const taskWithPicture = require("./routes/uploadPics");
+          
+cloudinary.config({ 
+  cloud_name: 'dae4sosbl', 
+  api_key: '283128793578546', 
+  api_secret: '5n2fLu0S97IIA0u5acfTd56zwIg',
+  secure: true
+});
 
 const multer = require("multer");
 const upload = multer({dest: "public/"});
@@ -29,11 +36,11 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/v1/tasks", tasksRoute);
 app.use("/v1/auth", authRoute);
-// app.use("/v1/upload-pic", taskWithPicture)
+app.use("/v1/upload-pic", taskWithPicture);
 
 app.use(isUserLoggedIn);
 
-app.post("/pic", upload.single("file"), async (req, res) => {
+app.post("/pic", upload.single("taskPicture"), async (req, res) => {
 
   try {
       const {taskTitle, taskBody} = req.body;
@@ -41,10 +48,15 @@ app.post("/pic", upload.single("file"), async (req, res) => {
   const {userId} = req.decoded;
 
   console.log(req.file);
-  
+
+  const cloudinaryUpload = await cloudinary.uploader.upload("public/" + filename, {
+    folder: "task-picture"
+  });
+
+  console.log(cloudinaryUpload.secure_url);
 
   const newTask = await taskCollection.create({
-      taskTitle, taskBody, pictureName: filename, user: userId
+      taskTitle, taskBody, pictureName: cloudinaryUpload.secure_url, user: userId
   });
 
   res.send({

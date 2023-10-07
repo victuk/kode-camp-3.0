@@ -4,19 +4,23 @@ const multer = require("multer");
 const upload = multer({dest: "public/"});
 const { taskCollection } = require("../schema/taskSchema");
 const { isUserLoggedIn } = require("./middlewares");
+const cloudinary = require("cloudinary").v2;
 
 router.use(isUserLoggedIn);
 
-router.post("/pic", upload.single("file"), async (req, res) => {
+router.post("/pic", upload.single("taskPicture"), async (req, res) => {
 
     try {
         const {taskTitle, taskBody} = req.body;
-    const {originalname} = req.file;
+    const {filename} = req.file;
     const {userId} = req.decoded;
-    
+
+    const result = await cloudinary.uploader.upload("public/" + filename, {
+        folder: "task-picture"
+    });
 
     const newTask = await taskCollection.create({
-        taskTitle, taskBody, pictureName: originalname, user: userId
+        taskTitle, taskBody, pictureName: result.secure_url, user: userId
     });
 
     res.send({
@@ -25,6 +29,7 @@ router.post("/pic", upload.single("file"), async (req, res) => {
     });
 
     } catch (error) {
+        console.log(error);
         res.status(500).json({message: "Internal server error"});
     }
 });
