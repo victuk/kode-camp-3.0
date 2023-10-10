@@ -10,9 +10,9 @@ const cloudinary = require("cloudinary").v2;
 const taskWithPicture = require("./routes/uploadPics");
           
 cloudinary.config({ 
-  cloud_name: 'dae4sosbl', 
-  api_key: '283128793578546', 
-  api_secret: '5n2fLu0S97IIA0u5acfTd56zwIg',
+  cloud_name: process.env.cloudinaryName, 
+  api_key: process.env.cloudinaryApiKey, 
+  api_secret: process.env.cloudinarySecret,
   secure: true
 });
 

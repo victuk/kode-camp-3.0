@@ -1,10 +1,11 @@
 const sendMail = require("nodemailer");
+require("dotenv").config();
 
 const options = {
     service: "gmail",
     auth: {
-        user: "ukokjnr@gmail.com",
-        pass: "bayardbelqjfngts"
+        user: process.env.emailUser,
+        pass: process.env.emailPassword
     }
 }; 
 
