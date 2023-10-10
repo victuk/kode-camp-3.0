@@ -9,8 +9,20 @@ const {isUserLoggedIn} = require("./middlewares");
 const { send } = require("../utilities/sendEmail");
 const { v4 } = require("uuid");
 const { forgetPasswordCollection } = require("../schema/forgetPasswords");
+const joi = require("joi");
 
 router.post("/register", async (req, res) => {
+
+    const registerValidationSchema = joi.object({
+        fullName: joi.string().required(),
+        email: joi.string().email().required(),
+        role: joi.string(),
+        password: joi.string().min(6).required()
+    });
+
+    const {error: registerValidationError} = registerValidationSchema.validate(req.body);
+
+    if(registerValidationError) return res.send(registerValidationError);
 
     const salt = bcrypt.genSaltSync(10);
 
@@ -30,6 +42,15 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
 
     const {email, password} = req.body;
+
+    const loginValidationSchema = joi.object({
+        email: joi.string().email(),
+        password: joi.string().required().min(6).max(30)
+    });
+
+    const {error: validationError} = loginValidationSchema.validate({email, password});
+
+    if(validationError) return res.send(validationError);
 
     const userDetail = await userCollection.findOne({email});
 
@@ -70,6 +91,13 @@ router.post("/forget-password", async(req, res) => {
     try {
         
        const {email} = req.body;
+
+       const emailValidation = joi.string().email().required().messages({
+        "string.email": "Your email is not valid",
+        "any.required": "'email' field is required"
+       });
+
+       await emailValidation.validateAsync(email);
        
        const user = await userCollection.findOne({email});
 

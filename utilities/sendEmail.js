@@ -7,7 +7,7 @@ const options = {
         user: process.env.emailUser,
         pass: process.env.emailPassword
     }
-}; 
+};
 
 
 const send = sendMail.createTransport(options);
