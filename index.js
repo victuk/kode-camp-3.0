@@ -72,3 +72,5 @@ app.post("/pic", upload.single("taskPicture"), async (req, res) => {
 app.listen(port, function() {
   console.log("Listening on port", port);
 });
+
+module.exports = app;

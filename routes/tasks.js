@@ -4,13 +4,28 @@ const { taskCollection } = require("../schema/taskSchema");
 const jwt = require("jsonwebtoken");
 const router = require("./auth");
 const { adminsOnly, isUserLoggedIn } = require("./middlewares");
+const { userCollection } = require("../schema/userSchema");
 require("dotenv").config();
 
 route.use(isUserLoggedIn);
 
 route.get("/", async (req, res) => {
-  const tasks = await taskCollection.find({ user: req.decoded.userId });
+  const tasks = await taskCollection.find({ user: req.decoded.userId }).populate("user", "fullName email");
   res.json(tasks);
+});
+
+route.get("/task-count", async (req, res) => {
+  const taskCount = await taskCollection.countDocuments({ user: req.decoded.userId });
+  res.send({
+    taskCount
+  });
+});
+
+route.get("/unique-task-title", async (req, res) => {
+  const uniqueUsers = await taskCollection.distinct("user");
+  res.send({
+    uniqueUsers: uniqueUsers.length
+  });
 });
 
 route.post("/", async (req, res) => {
