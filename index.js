@@ -8,6 +8,8 @@ const authRoute = require("./routes/auth");
 const path = require("path");
 const cloudinary = require("cloudinary").v2;
 const taskWithPicture = require("./routes/uploadPics");
+const cors = require("cors");
+const logger = require("morgan");
           
 cloudinary.config({ 
   cloud_name: process.env.cloudinaryName, 
@@ -30,6 +32,10 @@ connect.then(() => {
 });
 
 
+app.use(cors({
+  origin: "*"
+})); // methods, allowedHeaders
+app.use(logger("tiny")); // dev, short, tiny, common, combined
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 app.use(express.static(path.join(__dirname, "public")));
