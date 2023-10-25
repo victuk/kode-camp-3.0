@@ -10,7 +10,8 @@ const cloudinary = require("cloudinary").v2;
 const taskWithPicture = require("./routes/uploadPics");
 const cors = require("cors");
 const logger = require("morgan");
-          
+const shopItemsRoute = require("./routes/shopItems");
+// 4x
 cloudinary.config({ 
   cloud_name: process.env.cloudinaryName, 
   api_key: process.env.cloudinaryApiKey, 
@@ -43,6 +44,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/v1/tasks", tasksRoute);
 app.use("/v1/auth", authRoute);
 app.use("/v1/upload-pic", taskWithPicture);
+app.use("/v1/shop-items-route", shopItemsRoute);
 
 app.use(isUserLoggedIn);
 
