@@ -32,10 +32,9 @@ io.on("connection", (socket) => {
       message: "Your message has been sent"
     });
   });
-  
+
 });
 
-// 3x
 cloudinary.config({ 
   cloud_name: process.env.cloudinaryName, 
   api_key: process.env.cloudinaryApiKey, 
