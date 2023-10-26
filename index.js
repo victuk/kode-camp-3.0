@@ -1,6 +1,5 @@
 const express = require("express");
 const port = process.env.PORT || 4000;
-const app = express();
 const monogoose = require("mongoose");
 require("dotenv").config();
 const tasksRoute = require("./routes/tasks");
@@ -11,7 +10,32 @@ const taskWithPicture = require("./routes/uploadPics");
 const cors = require("cors");
 const logger = require("morgan");
 const shopItemsRoute = require("./routes/shopItems");
-// 4x
+const { Server } = require("socket.io");
+const { createServer } = require("http");
+
+const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer);
+
+io.on("connection", (socket) => {
+  console.log(socket.id);
+
+  socket.on("send-message", (payload, callback) => {
+    console.log(payload);
+
+    socket.to(payload.sendTo).emit("new-message", {
+      message: payload.message
+    });
+
+    callback({
+      successful: true,
+      message: "Your message has been sent"
+    });
+  });
+  
+});
+
+// 3x
 cloudinary.config({ 
   cloud_name: process.env.cloudinaryName, 
   api_key: process.env.cloudinaryApiKey, 
@@ -77,8 +101,8 @@ app.post("/pic", upload.single("taskPicture"), async (req, res) => {
   }
 });
 
-app.listen(port, function() {
-  console.log("Listening on port", port);
+httpServer.listen(port, function() {
+  console.log("REST and socket.io listening on port", port);
 });
 
-module.exports = app;
+// module.exports = app;
