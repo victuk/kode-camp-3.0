@@ -34,4 +34,28 @@ function isUserLoggedIn(req, res, next) {
     }
   }
 
-module.exports = {isUserLoggedIn, adminsOnly}
+
+function ioAuthController(token) {
+  const [tokenType, jwtKey] = token.split(" ");
+
+  if(tokenType == "Bearer") {
+    const userDetails = jwt.verify(jwtKey, process.env.secret);
+
+    return {
+      error: null,
+      user: userDetails
+    }
+  } else {
+    return {
+      error: {
+        message: "No valid token"
+      },
+      user: null
+    }
+  }
+
+  
+
+}
+
+module.exports = {isUserLoggedIn, adminsOnly, ioAuthController}

@@ -16,14 +16,82 @@ const { createServer } = require("http");
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
+// 3x
 
-io.on("connection", (socket) => {
-  console.log(socket.id);
+io.use((socket, next) => {
+  const token = socket.request.headers.auth;
 
-  socket.on("send-message", (payload, callback) => {
-    console.log(payload);
+  const {error, user} = ioAuthController(token);
 
-    socket.to(payload.sendTo).emit("new-message", {
+  if(error) return socket.emit("error", "an error occurred while trying to authenticate");
+
+  socket.request.userDetails = user;
+
+  next();
+
+});
+
+io.on("connection", async (socket) => {
+
+  const socketId = socket.id;
+  const userDetails = socket.request.userDetails;
+
+  const user = await connectedUsersCollection.create({
+    user: userDetails.userId,
+    socketId
+  });
+
+  const onlineUser = await userCollection.findById(userDetails.userId);
+
+  socket.broadcast.emit("user-online", `${onlineUser.fullName} is online`);
+
+  socket.on("users", async ({}, callback) => {
+    const users = await userCollection.find({_id: {$ne: userDetails.userId}});
+    callback(users);
+  });
+
+  socket.on("chats", async ({}, callback) => {
+    const chats = await chatsCollection.find({$or: [{user1: userDetails.userId}, {user2: userDetails.userId}]});
+    callback(chats);
+  });
+
+  socket.on("add-to-chat", async (id, callback) => {
+
+    if(await userCollection.findOne({user1: userDetails.userId, user2: id})) {
+      callback({
+        successful: false,
+        message: "Already exists"
+      });
+      return;
+    }
+
+    await chatsCollection.create({
+      user1: userDetails.userId,
+      user2: id
+    });
+
+    callback({
+      successful: true,
+      message: "Added Successfully!"
+    });
+  });
+
+  socket.on("send-message", async (payload, callback) => {
+    
+    await messagesCollection.create({
+      sender: userDetails.userId,
+      chatId: payload.chatId,
+      receiver: payload.userId,
+      message: payload.message
+    });
+
+    const user = await connectedUsersCollection.find({user: payload.userId}, "socketId");
+
+    const userScocketIds = user.map(socketId => {
+      return socketId.socketId;
+    });
+
+    socket.to(userScocketIds).emit("new-message", {
       message: payload.message
     });
 
@@ -33,6 +101,16 @@ io.on("connection", (socket) => {
     });
   });
 
+  socket.on("messages", async (payload, callback) => {
+    const chatMessages = await messagesCollection.find({chatId: payload.chatId});
+    callback(chatMessages);
+  });
+
+  socket.on("disconnect", async (reason) => {
+    await connectedUsersCollection.findOneAndDelete({
+      socketId
+    });
+  });
 });
 
 cloudinary.config({ 
@@ -45,7 +123,11 @@ cloudinary.config({
 const multer = require("multer");
 const upload = multer({dest: "public/"});
 const { taskCollection } = require("./schema/taskSchema");
-const { isUserLoggedIn } = require("./routes/middlewares");
+const { isUserLoggedIn, ioAuthController } = require("./routes/middlewares");
+const { connectedUsersCollection } = require("./schema/connectedUsers");
+const { userCollection } = require("./schema/userSchema");
+const { chatsCollection } = require("./schema/chats");
+const { messagesCollection } = require("./schema/messages");
 
 const connect = monogoose.connect(process.env.mongoDBURL);
 
